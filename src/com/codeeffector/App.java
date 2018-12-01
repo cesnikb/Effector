@@ -16,6 +16,8 @@ import com.jsyn.util.WaveRecorder;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.jsyn.unitgen.InterpolatingDelay;
+
 public class App {
     private JButton delayButton;
     private JButton wahWahButton;
@@ -38,8 +40,6 @@ public class App {
                         getFile();
                         return;
                     }
-//                    AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
-
 
                     Synthesizer synth = JSyn.createSynthesizer();
                     LineOut lineOut = new LineOut();
@@ -59,10 +59,10 @@ public class App {
                     player.rate.set(samples.getFrameRate()*2);
                     player.dataQueue.queue(samples);
 
-                    File outputWave = new File("output.wav");
-                    WaveRecorder recorder = new WaveRecorder(synth, outputWave);
-                    player.output.connect(0, recorder.getInput(), 0);
-                    recorder.start();
+                    //File outputWave = new File("output.wav");
+                    //WaveRecorder recorder = new WaveRecorder(synth, outputWave);
+                    //player.output.connect(0, recorder.getInput(), 0);
+                    //recorder.start();
 
                     player.output.connect(0, lineOut.input, 0);
 //                    player.output.connect(0, lineOut.input, 1);
@@ -71,11 +71,56 @@ public class App {
                         synth.sleepFor(1.0);
                     } while (player.dataQueue.hasMore());
 
-                    recorder.stop();
-                    recorder.close();
+                    //recorder.stop();
+                    //recorder.close();
                     synth.stop();
                 } catch (IOException | InterruptedException ea) {
                     ea.printStackTrace();
+                }
+            }
+        });
+
+        flangerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if(soundFile == null){
+                        getFile();
+                    }else{
+                        int delay = 1200;
+
+                        FloatSample samples = SampleLoader.loadFloatSample(soundFile);
+                        float[] dsamples = new float[samples.getNumFrames()*2];
+                        for (int i = 0; i < dsamples.length; i++)
+                            dsamples[i] = (float) samples.readDouble(i);
+
+
+                        float [] delayed = new float[dsamples.length + delay];
+                        float[] originals = new float[delayed.length];
+
+                        for(int i=0; i<dsamples.length; i++){
+                            delayed[i+delay] = dsamples[i];
+                            originals[i] = dsamples[i];
+                        }
+                        for(int i= 0; i<delay; i++){
+                            delayed[i] = 0;
+                            originals[i+delay] = 0;
+                        }
+
+                        float[] mixed = new float[originals.length];
+                        for(int i=0; i<originals.length;i ++){
+                            mixed[i] = originals[i] + delayed[i];
+                        }
+
+                        samples = new FloatSample(mixed);
+
+                        double fr = samples.getFrameRate();
+                        samples.setFrameRate(fr);
+
+                        play(samples);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
                 }
             }
         });
@@ -88,8 +133,6 @@ public class App {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-
-
             }
         });
         playEffectedSoundButton.addActionListener(new ActionListener() {
@@ -102,13 +145,45 @@ public class App {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-
             }
         });
     }
+
+    private void play(FloatSample samples){
+        try{
+            Synthesizer synth = JSyn.createSynthesizer();
+            LineOut lineOut = new LineOut();
+            synth.add(lineOut);
+            synth.start();
+
+            VariableRateMonoReader player = new VariableRateMonoReader();
+            synth.add(player);
+            player.rate.set(samples.getFrameRate()*2);
+            player.dataQueue.queue(samples);
+            File outputWave = new File("output.wav");
+            WaveRecorder recorder = new WaveRecorder(synth, outputWave);
+            player.output.connect(0, recorder.getInput(), 0);
+            recorder.start();
+
+            player.output.connect(0, lineOut.input, 0);
+            synth.startUnit(lineOut);
+            do {
+                synth.sleepFor(1.0);
+            } while (player.dataQueue.hasMore());
+
+            recorder.stop();
+            recorder.close();
+            synth.stop();
+            synth.stop();}
+        catch(IOException | InterruptedException ea){
+            ea.printStackTrace();
+        }
+    }
+
+
     public void getFile() throws IOException {
         final JFileChooser fc = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("MPEG3 songs", "mp3","wav");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("MPEG3 songs", "mp3","wav", "mp4");
         fc.setFileFilter(filter);
 
         int returnVal = fc.showOpenDialog(loadSampleButton);
