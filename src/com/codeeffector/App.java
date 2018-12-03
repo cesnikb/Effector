@@ -36,7 +36,7 @@ public class App {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    if(soundFile == null){
+                    if (soundFile == null) {
                         getFile();
                         return;
                     }
@@ -48,7 +48,7 @@ public class App {
 
 
                     FloatSample samples = SampleLoader.loadFloatSample(soundFile);
-                    float[] dsamples = new float[samples.getNumFrames()*2];
+                    float[] dsamples = new float[samples.getNumFrames() * 2];
                     for (int i = 0; i < dsamples.length; i++)
                         dsamples[i] = (float) samples.readDouble(i);
                     double fr = samples.getFrameRate();
@@ -56,7 +56,7 @@ public class App {
                     samples.setFrameRate(fr);
                     VariableRateMonoReader player = new VariableRateMonoReader();
                     synth.add(player);
-                    player.rate.set(samples.getFrameRate()*2);
+                    player.rate.set(samples.getFrameRate() * 2);
                     player.dataQueue.queue(samples);
 
                     //File outputWave = new File("output.wav");
@@ -82,35 +82,35 @@ public class App {
 
         flangerButton.addActionListener(new ActionListener() {
             /*
-            * We take an array, copy it and shift it. Then we apply some changes to the
-            * copied signal and join in with the original one
-            * to get the flanger effect.
-            */
+             * We take an array, copy it and shift it. Then we apply some changes to the
+             * copied signal and join in with the original one
+             * to get the flanger effect.
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    if(soundFile == null){
+                    if (soundFile == null) {
                         getFile();
-                    }else{
+                    } else {
                         int delay = 1200;
 
                         FloatSample samples = SampleLoader.loadFloatSample(soundFile);
-                        float[] dsamples = new float[samples.getNumFrames()*2];
+                        float[] dsamples = new float[samples.getNumFrames() * 2];
                         for (int i = 0; i < dsamples.length; i++)
                             dsamples[i] = (float) samples.readDouble(i);
 
                         System.out.println(samples.getFrameRate());
 
-                        float [] delayed = new float[dsamples.length + delay];
+                        float[] delayed = new float[dsamples.length + delay];
                         float[] originals = new float[delayed.length];
 
-                        for(int i=0; i<dsamples.length; i++){
-                            delayed[i+delay] = dsamples[i];
+                        for (int i = 0; i < dsamples.length; i++) {
+                            delayed[i + delay] = dsamples[i];
                             originals[i] = dsamples[i];
                         }
-                        for(int i= 0; i<delay; i++){
+                        for (int i = 0; i < delay; i++) {
                             delayed[i] = 0;
-                            originals[i+delay] = 0;
+                            originals[i + delay] = 0;
                         }
 
                         double angle = 0.0;
@@ -118,18 +118,18 @@ public class App {
                         double sample_rate = samples.getFrameRate();
                         double oscilator = 0.0;
 
-                        for(int i=0;i < delayed.length; i++){
-                            modulo_i = i%sample_rate*10;
-                            if(i%sample_rate == 0){
-                                angle=0;
+                        for (int i = 0; i < delayed.length; i++) {
+                            modulo_i = i % sample_rate * 10;
+                            if (i % sample_rate == 0) {
+                                angle = 0;
                             }
-                            angle += (float)(2*Math.PI) * 2 * (float)(modulo_i/sample_rate); // sin(2*pi* f  *(t/Fs))
-                            oscilator = (float)Math.sin( angle );
-                            delayed[i] = delayed[i] * (float)oscilator;
+                            angle += (float) (2 * Math.PI) * 2 * (float) (modulo_i / sample_rate); // sin(2*pi* f  *(t/Fs))
+                            oscilator = (float) Math.sin(angle);
+                            delayed[i] = delayed[i] * (float) oscilator;
                         }
 
                         float[] mixed = new float[originals.length];
-                        for(int i=0; i<originals.length;i ++){
+                        for (int i = 0; i < originals.length; i++) {
                             mixed[i] = originals[i] + delayed[i];
                         }
 
@@ -168,11 +168,54 @@ public class App {
                 }
             }
         });
+        delayButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (soundFile == null) {
+                        getFile();
+                    } else {
+                        int numberOfEchoes = 2;
+                        int delayms = 1000; //in miliseconds
+                        FloatSample samples = SampleLoader.loadFloatSample(soundFile);
+
+                        double frame_rate = samples.getFrameRate();
+                        int buffer_length = samples.getNumFrames() * 2;
+                        int delayfr = (int) (frame_rate * delayms / 1000);//Delay calculated to number of frames
+
+                        float echoAmplitude = 1f;
+
+                        float[] dsamples = new float[buffer_length];
+                        float[] delayedsample = new float[buffer_length + (delayfr * numberOfEchoes)];
+                        int echoIndex = 0;
+                        float echoValue = 0f;
+
+                        for (int i = 0; i < buffer_length; i++) {
+                            dsamples[i] = (float) samples.readDouble(i);
+                            delayedsample[i] = dsamples[i];
+                        }
+                        for (int i = 1; i <= numberOfEchoes; i++) {
+                            echoAmplitude = echoAmplitude * 0.6f;
+                            for (int j = 0; j < buffer_length; j++) {
+                                echoIndex = j + (delayfr * i);
+                                echoValue = (dsamples[j] * echoAmplitude);
+                                delayedsample[echoIndex] = echoValue + delayedsample[echoIndex];
+                            }
+                        }
+                        samples = new FloatSample(delayedsample);
+                        samples.setFrameRate(frame_rate);
+                        play(samples);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+        });
     }
 
-
-    private void play(FloatSample samples){
-        try{
+    private void play(FloatSample samples) {
+        try {
             Synthesizer synth = JSyn.createSynthesizer();
             LineOut lineOut = new LineOut();
             synth.add(lineOut);
@@ -180,7 +223,7 @@ public class App {
 
             VariableRateMonoReader player = new VariableRateMonoReader();
             synth.add(player);
-            player.rate.set(samples.getFrameRate()*2);
+            player.rate.set(samples.getFrameRate() * 2);
             player.dataQueue.queue(samples);
             File outputWave = new File("output.wav");
             WaveRecorder recorder = new WaveRecorder(synth, outputWave);
@@ -196,8 +239,8 @@ public class App {
             recorder.stop();
             recorder.close();
             synth.stop();
-            synth.stop();}
-        catch(IOException | InterruptedException ea){
+            synth.stop();
+        } catch (IOException | InterruptedException ea) {
             ea.printStackTrace();
         }
     }
@@ -205,7 +248,7 @@ public class App {
 
     public void getFile() throws IOException {
         final JFileChooser fc = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("MPEG3 songs", "mp3","wav", "mp4");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("MPEG3 songs", "mp3", "wav", "mp4");
         fc.setFileFilter(filter);
 
         int returnVal = fc.showOpenDialog(loadSampleButton);
@@ -218,6 +261,7 @@ public class App {
         }
 
     }
+
     public float[] getBuffer() throws IOException {
         FloatSample samples = SampleLoader.loadFloatSample(soundFile);
 
@@ -229,12 +273,8 @@ public class App {
     }
 
 
-
-
-
     public static void main(String[] args)
-            throws Exception
-    {
+            throws Exception {
         JFrame frame = new JFrame("App");
         frame.setContentPane(new App().panelMain);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
