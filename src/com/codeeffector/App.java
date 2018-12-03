@@ -81,6 +81,11 @@ public class App {
         });
 
         flangerButton.addActionListener(new ActionListener() {
+            /*
+            * We take an array, copy it and shift it. Then we apply some changes to the
+            * copied signal and join in with the original one
+            * to get the flanger effect.
+            */
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -94,6 +99,7 @@ public class App {
                         for (int i = 0; i < dsamples.length; i++)
                             dsamples[i] = (float) samples.readDouble(i);
 
+                        System.out.println(samples.getFrameRate());
 
                         float [] delayed = new float[dsamples.length + delay];
                         float[] originals = new float[delayed.length];
@@ -105,6 +111,21 @@ public class App {
                         for(int i= 0; i<delay; i++){
                             delayed[i] = 0;
                             originals[i+delay] = 0;
+                        }
+
+                        double angle = 0.0;
+                        double modulo_i = 0.0;
+                        double sample_rate = samples.getFrameRate();
+                        double oscilator = 0.0;
+
+                        for(int i=0;i < delayed.length; i++){
+                            modulo_i = i%sample_rate*10;
+                            if(i%sample_rate == 0){
+                                angle=0;
+                            }
+                            angle += (float)(2*Math.PI) * 2 * (float)(modulo_i/sample_rate); // sin(2*pi* f  *(t/Fs))
+                            oscilator = (float)Math.sin( angle );
+                            delayed[i] = delayed[i] * (float)oscilator;
                         }
 
                         float[] mixed = new float[originals.length];
@@ -148,6 +169,7 @@ public class App {
             }
         });
     }
+
 
     private void play(FloatSample samples){
         try{
