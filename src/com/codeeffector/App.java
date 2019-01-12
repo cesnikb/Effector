@@ -422,7 +422,7 @@ public class App {
     }
 
     private FloatSample calculate_distortion(FloatSample samples,int numChannels, float threshold){
-        int buffer_length = samples.getNumFrames();
+        int buffer_length = samples.getNumFrames()*numChannels;
 
         float[] distorted_array = new float[buffer_length];
         float[] dsamples = new float[buffer_length];
@@ -447,7 +447,7 @@ public class App {
     }
 
     private FloatSample calculate_low_pass(FloatSample samples,int numChannels,int smoothing){
-        int buffer_length = samples.getNumFrames();
+        int buffer_length = samples.getNumFrames()*numChannels;
 
         float[] dsamples = new float[buffer_length];
         float[] lowpassed_array = new float[buffer_length];
