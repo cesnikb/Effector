@@ -5,16 +5,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
 
 import com.jsyn.JSyn;
-import com.jsyn.ports.*;
 import com.jsyn.Synthesizer;
 import com.jsyn.data.FloatSample;
 import com.jsyn.unitgen.*;
 import com.jsyn.util.SampleLoader;
-import com.jsyn.util.WaveRecorder;
 
 
 import javax.swing.event.ChangeEvent;
@@ -26,6 +22,8 @@ public class App {
     private JButton distortionButton;
     private JButton flangerButton;
     private JButton reverbButton;
+    private JButton distortionOffButton;
+    private JButton lowpassButton;
     private JButton chorusButton;
     private JButton button6;
     private JPanel panelMain;
@@ -42,6 +40,10 @@ public class App {
     public JLabel feedbackVal;
     private JLabel delayVal;
     private JButton phaserButton;
+    private JSlider distSlider;
+    private JSlider slider5;
+    private JLabel thresholdVal;
+    private JLabel smoothingVal;
     private JButton button1;
     private File soundFile;
     private VariableRateDataReader samplePlayer;
@@ -216,7 +218,7 @@ public class App {
                         int numberOfChannels = samples.getChannelsPerFrame();
 
 
-                        FloatSample distortedSamples = calculate_distortion(samples,numberOfChannels,0.1f);
+                        FloatSample distortedSamples = calculate_distortion(samples,0.1f);
                         distortedSamples.setFrameRate(frame_rate);
                         play(distortedSamples);
                     }
@@ -249,17 +251,7 @@ public class App {
         powerDelay.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JButton powerDelay = (JButton)e.getSource();
-                String txtPower = powerDelay.getText();
-                if(txtPower.equals("On")){
-                    powerDelay.setText("Off");
-                    powerDelay.setBackground(Color.red);
-
-                }else{
-                    powerDelay.setText("On");
-                    powerDelay.setBackground(Color.green);
-
-                }
+                redGreen(e);
             }
         });
         playEffectedSoundButton.addActionListener(new ActionListener() {
@@ -279,6 +271,17 @@ public class App {
                                 effectedSignal = getDelayed((float) decay, feedback, delay);
                             }
 
+                            //Process distortion
+                            if (distortionOffButton.getText().equals("On")) {
+                                int thresholdDist = distSlider.getValue();
+                                effectedSignal = calculate_distortion(effectedSignal, thresholdDist*0.01f);
+                            }
+
+                            //Process lowpass
+                            if (lowpassButton.getText().equals("On")) {
+                                int lowpass = slider5.getValue();
+                                effectedSignal = calculate_low_pass(effectedSignal, lowpass);
+                            }
 
 
                             FloatSample finalEffectedSignal = effectedSignal;
@@ -340,7 +343,7 @@ public class App {
                         double frame_rate = samples.getFrameRate();
                         int numberOfChannels = samples.getChannelsPerFrame();
 
-                        FloatSample lowpassSamples = calculate_low_pass(samples,numberOfChannels,500);
+                        FloatSample lowpassSamples = calculate_low_pass(samples,500);
                         lowpassSamples.setFrameRate(frame_rate);
                         play(lowpassSamples);
                     }
@@ -349,6 +352,45 @@ public class App {
                 }
             }
         });
+        distortionOffButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redGreen(e);
+            }
+        });
+        lowpassButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redGreen(e);
+            }
+        });
+        distSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                thresholdVal.setText(String.format("%.2f", source.getValue()*0.01));
+            }
+        });
+        slider5.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                smoothingVal.setText(Integer.toString(source.getValue()));
+            }
+        });
+    }
+    private void redGreen(ActionEvent e){
+        JButton power = (JButton)e.getSource();
+        String txtPower = power.getText();
+        if(txtPower.equals("On")){
+            power.setText("Off");
+            power.setBackground(Color.red);
+
+        }else{
+            power.setText("On");
+            power.setBackground(Color.green);
+
+        }
     }
     private FloatSample getDelayed(float decay, int feedback, int delay){
         try {
@@ -421,7 +463,8 @@ public class App {
         return  retSample;
     }
 
-    private FloatSample calculate_distortion(FloatSample samples,int numChannels, float threshold){
+    private FloatSample calculate_distortion(FloatSample samples, float threshold){
+        int numChannels = samples.getChannelsPerFrame();
         int buffer_length = samples.getNumFrames()*numChannels;
 
         float[] distorted_array = new float[buffer_length];
@@ -458,7 +501,8 @@ public class App {
         return new FloatSample(dsamples ,samples.getChannelsPerFrame());
     }
 
-    private FloatSample calculate_low_pass(FloatSample samples,int numChannels,int smoothing){
+    private FloatSample calculate_low_pass(FloatSample samples,int smoothing){
+        int numChannels = samples.getChannelsPerFrame();
         int buffer_length = samples.getNumFrames()*numChannels;
 
         float[] dsamples = new float[buffer_length];
