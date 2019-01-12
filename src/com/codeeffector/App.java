@@ -31,6 +31,7 @@ public class App {
     private JPanel panelMain;
     private JButton playEffectedSoundButton;
     private JButton loadSampleButton;
+    private JButton lowPassButton;
     private JButton loadDefaultSampleButton;
     private JTextArea noSelectedSampleTextArea;
     public JSlider slider1;
@@ -147,10 +148,10 @@ public class App {
                         getFile();
                     } else {
                         // Number parameters
-                        int delayms = 500; //in miliseconds
-                        int numberOfRepetitions = 50;
+                        int delayms = slider2.getValue(); //in miliseconds
+                        int numberOfRepetitions = slider3.getValue();
                         float echoAmplitude = 1f;
-                        float echoDecay = 0.8f;
+                        float echoDecay = slider1.getValue() * 0.01f;
 
                         FloatSample samples = SampleLoader.loadFloatSample(soundFile);
                         int numberOfChannels = samples.getChannelsPerFrame();
@@ -158,6 +159,8 @@ public class App {
                         double frame_rate = samples.getFrameRate();
 
                         //Delayed sample
+                        //Delayed sample
+
                         FloatSample delayedsample = calculate_delay(delayms, numberOfRepetitions, echoAmplitude, echoDecay, samples,numberOfChannels);
                         delayedsample.setFrameRate(frame_rate);
                         delayedsample.setChannelsPerFrame(2);
@@ -274,6 +277,50 @@ public class App {
                 loadFile();
             }
         });
+        reverbButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (soundFile == null) {
+                        getFile();
+                    } else {
+                        FloatSample samples = SampleLoader.loadFloatSample(soundFile);
+
+                        double frame_rate = samples.getFrameRate();
+                        int numberOfChannels = samples.getChannelsPerFrame();
+
+
+                        FloatSample reverbSamples = calculate_reverb(samples,numberOfChannels,0.1f);
+                        reverbSamples.setFrameRate(frame_rate);
+                        play(reverbSamples);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+        });
+        lowPassButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (soundFile == null) {
+                        getFile();
+                    } else {
+                        FloatSample samples = SampleLoader.loadFloatSample(soundFile);
+
+                        double frame_rate = samples.getFrameRate();
+                        int numberOfChannels = samples.getChannelsPerFrame();
+
+                        FloatSample lowpassSamples = calculate_low_pass(samples,numberOfChannels,500);
+                        lowpassSamples.setFrameRate(frame_rate);
+                        play(lowpassSamples);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
     }
     private FloatSample getDelayed(float decay, int feedback, int delay){
         try {
@@ -303,9 +350,51 @@ public class App {
         return null;
 
     }
+
+    private FloatSample calculate_reverb(FloatSample samples,int numChannels, float threshold){
+        return null;
+    }
+    private FloatSample calculate_delay1(int delayms, int numberOfRepetitions, float echoAmplitude, float echoDecay, FloatSample samples, int numChannels) throws IOException {
+        int echoIndex = 0;
+        float echoValue = 0f;
+
+        // Get sample info
+        int buffer_length = samples.getNumFrames()*numChannels;
+        double frame_rate = samples.getFrameRate();
+
+        //Delay calculated to number of frames
+        int delayfr = (int) Math.ceil(frame_rate * delayms / 1000);
+
+
+        float[] dsamples = new float[buffer_length];
+        int delayedFrames = buffer_length + (delayfr * numberOfRepetitions);
+        float[] delayedsample = new float[delayedFrames];
+
+        // Fill tables with original sample
+        for (int i = 0; i < buffer_length; i++) {
+            dsamples[i] = (float) samples.readDouble(i);
+            delayedsample[i] = dsamples[i];
+        }
+
+        System.out.println(samples.getNumFrames());
+
+        // Add delays
+        for (int i = 1; i <= numberOfRepetitions; i++) {
+            echoAmplitude = echoAmplitude * echoDecay;
+            for (int j = 0; j < buffer_length; j++) {
+                echoIndex = j + (delayfr * i);
+                echoValue = (dsamples[j] * echoAmplitude);
+                delayedsample[echoIndex] = echoValue + delayedsample[echoIndex];
+            }
+        }
+
+        FloatSample retSample = new FloatSample(delayedsample,numChannels);
+
+        return  retSample;
+    }
+
     private FloatSample calculate_distortion(FloatSample samples,int numChannels, float threshold){
         int buffer_length = samples.getNumFrames();
-        double frame_rate = samples.getFrameRate();
 
         float[] distorted_array = new float[buffer_length];
         float[] dsamples = new float[buffer_length];
@@ -326,28 +415,29 @@ public class App {
         }
 
 
-        FloatSample distorted_sample = new FloatSample(distorted_array,numChannels);
-        return distorted_sample;
+        return new FloatSample(distorted_array,numChannels);
     }
 
-    private FloatSample calculate_low_pass(FloatSample samples,int numChannels){
+    private FloatSample calculate_low_pass(FloatSample samples,int numChannels,int smoothing){
         int buffer_length = samples.getNumFrames();
-        double frame_rate = samples.getFrameRate();
 
-        float[] low_pass_array = new float[buffer_length];
         float[] dsamples = new float[buffer_length];
+        float[] lowpassed_array = new float[buffer_length];
 
         // Fill tables with original sample
         for (int i = 0; i < buffer_length; i++) {
             dsamples[i] = (float) samples.readDouble(i);
         }
+        float val = dsamples[0];
+        for (int i = 1; i < buffer_length; i++) {
+            float currentVal = dsamples[i];
+            currentVal += (currentVal - val);
+            val += (currentVal - val) / smoothing;
+            lowpassed_array[i] = val;
 
+        }
 
-
-
-
-        FloatSample low_pass_sample = new FloatSample(low_pass_array,numChannels);
-        return low_pass_sample;
+        return new FloatSample(lowpassed_array,numChannels);
     }
 
 
@@ -385,9 +475,7 @@ public class App {
             }
         }
 
-        FloatSample retSample = new FloatSample(delayedsample,numChannels);
-
-        return  retSample;
+        return new FloatSample(delayedsample,numChannels);
     }
 
     private FloatSample calculate_varying_delay(int delay_change_after_x_frames, int delaymax, int delaymin, int numberOfRepetitions, float echoAmplitude, float echoDecay, FloatSample samples, int numChannels) throws IOException {
@@ -449,9 +537,7 @@ public class App {
             }
         }
 
-        FloatSample retSample = new FloatSample(delayedsample,numChannels);
-
-        return  retSample;
+        return new FloatSample(delayedsample,numChannels);
     }
 
 
@@ -511,7 +597,7 @@ public class App {
         return threshold + log_val;
     }
 
-    public void getFile() throws IOException {
+    private void getFile() throws IOException {
         final JFileChooser fc = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("MPEG3 songs", "mp3", "wav", "mp4");
         fc.setFileFilter(filter);
@@ -526,7 +612,7 @@ public class App {
         }
 
     }
-    public void loadFile(){
+    private void loadFile(){
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         System.out.println(classloader.getParent().getName());
         soundFile = new File(classloader.getResource("acoustic.wav").getFile());
@@ -550,19 +636,9 @@ public class App {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JButton b=new JButton("button1");
         frame.pack();
-
-        buildGUI();
         frame.setVisible(true);
     }
-    static public void buildGUI(){
-        java.util.Hashtable<Integer,JLabel> labelTable = new java.util.Hashtable<Integer,JLabel>();
-        labelTable.put(100, new JLabel("1.0"));
-        labelTable.put(75, new JLabel("0.75"));
-        labelTable.put(50, new JLabel("0.50"));
-        labelTable.put(25, new JLabel("0.25"));
-        labelTable.put(0, new JLabel("0.0"));
 
-    }
 
 }
 
