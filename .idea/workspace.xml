@@ -3,20 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="24c8bd1d-3af5-4ec6-9792-a9cd0b048a68" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$10$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$10.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$11.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$2$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$3.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$4.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$5.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$6.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$7.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$8.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App$9.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Effector/com/codeeffector/App.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/codeeffector/App.form" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/codeeffector/App.form" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/codeeffector/App.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/codeeffector/App.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
@@ -31,11 +18,14 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/codeeffector/App.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="147" selection-start-line="147" selection-end-line="177" selection-end-column="11" />
+            <state relative-caret-position="340">
+              <caret line="78" column="40" lean-forward="true" selection-start-line="78" selection-start-column="40" selection-end-line="78" selection-end-column="40" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#10696#10697#0" expanded="true" />
+                <element signature="e#11356#11357#0" expanded="true" />
+                <element signature="e#11398#11399#0" expanded="true" />
+                <element signature="e#13295#13296#0" expanded="true" />
+                <element signature="e#13322#13323#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -81,6 +71,8 @@
       <find>calculate_delay</find>
       <find>flanger</find>
       <find>chorus</find>
+      <find>lowpass</find>
+      <find>calculate_low_pass</find>
     </findStrings>
     <replaceStrings>
       <replace>Phaser</replace>
@@ -92,8 +84,8 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/com/codeeffector/App.form" />
         <option value="$PROJECT_DIR$/src/com/codeeffector/Phaser.java" />
+        <option value="$PROJECT_DIR$/src/com/codeeffector/App.form" />
         <option value="$PROJECT_DIR$/src/com/codeeffector/App.java" />
       </list>
     </option>
@@ -127,6 +119,10 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="codeeffector" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="Effector" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -136,7 +132,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1547288234372" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1547303365712" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="JAVA" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.last.edited" value="Project" />
@@ -206,7 +202,7 @@
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18336888" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18336888" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -215,13 +211,13 @@
       <window_info id="Favorites" order="6" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.25135428" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4989339" visible="true" weight="0.25135428" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3997833" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32936078" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.32936078" />
-      <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
+      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5010661" side_tool="true" weight="0.25135428" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32936078" />
       <window_info anchor="bottom" id="Messages" order="10" weight="0.32936078" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -281,11 +277,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/codeeffector/App.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="147" selection-start-line="147" selection-end-line="177" selection-end-column="11" />
+        <state relative-caret-position="340">
+          <caret line="78" column="40" lean-forward="true" selection-start-line="78" selection-start-column="40" selection-end-line="78" selection-end-column="40" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10696#10697#0" expanded="true" />
+            <element signature="e#11356#11357#0" expanded="true" />
+            <element signature="e#11398#11399#0" expanded="true" />
+            <element signature="e#13295#13296#0" expanded="true" />
+            <element signature="e#13322#13323#0" expanded="true" />
           </folding>
         </state>
       </provider>

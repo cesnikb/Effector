@@ -41,6 +41,7 @@ public class App {
     public JLabel decayVal;
     public JLabel feedbackVal;
     private JLabel delayVal;
+    private JButton phaserButton;
     private JButton button1;
     private File soundFile;
     private VariableRateDataReader samplePlayer;
@@ -59,6 +60,33 @@ public class App {
                 } catch (IOException ea) {
                     ea.printStackTrace();
                 }
+            }
+        });
+
+
+        phaserButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (soundFile == null) {
+                        getFile();
+                    } else {
+
+                        FloatSample samples = SampleLoader.loadFloatSample(soundFile);
+
+                        double frame_rate = samples.getFrameRate();
+
+                        //Delayed sample
+                        FloatSample phased_sample = all_pass(samples, 0.85f);
+                        phased_sample.setFrameRate(frame_rate);
+                        phased_sample.setChannelsPerFrame(2);
+
+                        play(phased_sample);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
             }
         });
 
@@ -439,7 +467,26 @@ public class App {
 
         return new FloatSample(lowpassed_array,numChannels);
     }
+    private FloatSample all_pass(FloatSample sample, float gain) throws IOException {
+        // y(n) = -gain * x(n) + x(n - 1) + gain * y(n - 1) => all pass from jsyn
+        int buffer_length = sample.getNumFrames()*sample.getChannelsPerFrame();
 
+        float [] output = new float [buffer_length];
+
+        float x_prev = (float)sample.readDouble(0)*gain;
+        float x_curr = 0;
+        float out = 0;
+        output[0] = gain*-x_prev;
+
+        for (int i = 1; i < buffer_length; i++) {
+            x_curr = (float)sample.readDouble(i);
+            out = gain* (output[i-1] - x_curr) + x_prev;
+            x_prev = x_curr;
+            output[i] = out;
+        }
+
+        return new FloatSample(output,sample.getChannelsPerFrame());
+    }
 
     private FloatSample calculate_delay(int delayms, int numberOfRepetitions, float echoAmplitude, float echoDecay, FloatSample samples, int numChannels) throws IOException {
         int echoIndex = 0;
