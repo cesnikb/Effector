@@ -9,11 +9,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import com.jsyn.JSyn;
+import com.jsyn.ports.*;
 import com.jsyn.Synthesizer;
 import com.jsyn.data.FloatSample;
 import com.jsyn.unitgen.*;
 import com.jsyn.util.SampleLoader;
 import com.jsyn.util.WaveRecorder;
+
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -74,53 +76,26 @@ public class App {
                     if (soundFile == null) {
                         getFile();
                     } else {
-                        int delay = 1200;
-
+                        int delay_ms_max = 60;
+                        int delay_ms_min = 20;
+                        //int delay = 1200;
                         FloatSample samples = SampleLoader.loadFloatSample(soundFile);
-                        float[] dsamples = new float[samples.getNumFrames() * 2];
+
+                        float[] dsamples = new float[samples.getNumFrames() * samples.getChannelsPerFrame()];
                         for (int i = 0; i < dsamples.length; i++)
                             dsamples[i] = (float) samples.readDouble(i);
 
-                        System.out.println(samples.getFrameRate());
+                        double frame_rate = samples.getFrameRate();
 
-                        float[] delayed = new float[dsamples.length + delay];
-                        float[] originals = new float[delayed.length];
+                        //Delayed sample
+                        FloatSample delayedsample = calculate_varying_delay(40, delay_ms_max, delay_ms_min,1, 1f, 1f, samples, samples.getChannelsPerFrame());
+                        delayedsample.setFrameRate(frame_rate);
+                        delayedsample.setChannelsPerFrame(samples.getChannelsPerFrame());
 
-                        for (int i = 0; i < dsamples.length; i++) {
-                            delayed[i + delay] = dsamples[i];
-                            originals[i] = dsamples[i];
-                        }
-                        for (int i = 0; i < delay; i++) {
-                            delayed[i] = 0;
-                            originals[i + delay] = 0;
-                        }
+                        play(delayedsample);
 
-                        double angle = 0.0;
-                        double modulo_i = 0.0;
-                        double sample_rate = samples.getFrameRate();
-                        double oscilator = 0.0;
 
-                        for (int i = 0; i < delayed.length; i++) {
-                            modulo_i = i % sample_rate * 10;
-                            if (i % sample_rate == 0) {
-                                angle = 0;
-                            }
-                            angle += (float) (2 * Math.PI) * 2 * (float) (modulo_i / sample_rate); // sin(2*pi* f  *(t/Fs))
-                            oscilator = (float) Math.sin(angle);
-                            delayed[i] = delayed[i] * (float) oscilator;
-                        }
 
-                        float[] mixed = new float[originals.length];
-                        for (int i = 0; i < originals.length; i++) {
-                            mixed[i] = originals[i] + delayed[i];
-                        }
-
-                        samples = new FloatSample(mixed,samples.getChannelsPerFrame());
-
-                        double fr = samples.getFrameRate();
-                        samples.setFrameRate(fr);
-
-                        play(samples);
                     }
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -391,6 +366,72 @@ public class App {
 
         return  retSample;
     }
+
+    private FloatSample calculate_varying_delay(int delay_change_after_x_frames, int delaymax, int delaymin, int numberOfRepetitions, float echoAmplitude, float echoDecay, FloatSample samples, int numChannels) throws IOException {
+        //Calculates delay for varying time windows
+
+        int echoIndex = 0;
+        float echoValue = 0f;
+
+        // Get sample info
+        int buffer_length = samples.getNumFrames()*numChannels;
+        double frame_rate = samples.getFrameRate();
+
+        //Delay calculated to number of frames
+        //int delayfr = (int) Math.ceil(frame_rate * delayms / 1000);
+        int number_of_different_delays = delaymax-delaymin;
+
+        int[] delays = new int[number_of_different_delays];
+
+        int delayfr = (int)Math.ceil(frame_rate * (delaymax) / 1000);
+        for(int i = 0; i < number_of_different_delays; i++){
+            delays[i] = (int) Math.ceil(frame_rate * (i) / 1000);
+
+        }
+
+        float[] dsamples = new float[buffer_length];
+        int delayedFrames = buffer_length + (delayfr * numberOfRepetitions);
+        float[] delayedsample = new float[delayedFrames];
+
+        // Fill tables with original sample
+        for (int i = 0; i < buffer_length; i++) {
+            dsamples[i] = (float) samples.readDouble(i);
+            delayedsample[i] = dsamples[i];
+        }
+
+        // Add delays
+        int delay_current = delays[0];
+        int counter = 0;
+        for (int i = 1; i <= numberOfRepetitions; i++) {
+            echoAmplitude = echoAmplitude * echoDecay;
+            for (int j = 0; j < buffer_length; j++) {
+                if(j%delay_change_after_x_frames==0){
+                    if(counter < number_of_different_delays-1){
+                        counter+=1;
+                    }else{counter = 0;}
+
+                  delay_current = delays[counter];
+                }
+
+                if(j + delay_current < buffer_length){
+                    echoIndex = j + (delayfr * i);
+                    echoValue = (dsamples[j+delay_current] * echoAmplitude);
+                    delayedsample[echoIndex] = echoValue + delayedsample[echoIndex];
+                }
+                else{
+                    echoIndex = j + (delayfr * i);
+                    echoValue = (dsamples[j] * echoAmplitude);
+                    delayedsample[echoIndex] = echoValue + delayedsample[echoIndex];
+                }
+            }
+        }
+
+        FloatSample retSample = new FloatSample(delayedsample,numChannels);
+
+        return  retSample;
+    }
+
+
     private void play(FloatSample samples) throws IOException {
         Synthesizer synth = JSyn.createSynthesizer();
 
