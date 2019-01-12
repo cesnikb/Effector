@@ -446,6 +446,18 @@ public class App {
         return new FloatSample(distorted_array,numChannels);
     }
 
+    private FloatSample volume_percentagte(FloatSample samples, float percentage){
+        //Percentage can be over 1 => volume up; or less than 1 => volume down.
+        int buffer_length = samples.getNumFrames()*samples.getChannelsPerFrame();
+        float[] dsamples = new float[buffer_length];
+
+        for(int i=0; i < buffer_length; i++){
+            dsamples[i] = percentage * (float)samples.readDouble(i);
+        }
+
+        return samples;
+    }
+
     private FloatSample calculate_low_pass(FloatSample samples,int numChannels,int smoothing){
         int buffer_length = samples.getNumFrames()*numChannels;
 
