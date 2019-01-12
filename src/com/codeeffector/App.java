@@ -455,7 +455,7 @@ public class App {
             dsamples[i] = percentage * (float)samples.readDouble(i);
         }
 
-        return samples;
+        return new FloatSample(dsamples ,samples.getChannelsPerFrame());
     }
 
     private FloatSample calculate_low_pass(FloatSample samples,int numChannels,int smoothing){
@@ -605,6 +605,7 @@ public class App {
 
 
         try {
+            samples = volume_percentagte(samples, 1f);
 
             LineOut lineOut = new LineOut();
             synth.add(lineOut = new LineOut());
