@@ -61,11 +61,36 @@ public class App {
             }
         });
 
+        chorusButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (soundFile == null) {
+                        getFile();
+                    } else {
+
+                        FloatSample samples = SampleLoader.loadFloatSample(soundFile);
+                        int numberOfChannels = samples.getChannelsPerFrame();
+
+                        double frame_rate = samples.getFrameRate();
+
+                        //Delayed sample
+                        FloatSample delayedsample = calculate_delay(12, 1, 0.85f, 0.6f, samples,numberOfChannels);
+                        delayedsample.setFrameRate(frame_rate);
+                        delayedsample.setChannelsPerFrame(2);
+
+                        play(delayedsample);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+        });
+
         flangerButton.addActionListener(new ActionListener() {
             /*
-             * We take an array, copy it and shift it. Then we apply some changes to the
-             * copied signal and join in with the original one
-             * to get the flanger effect.
+             * Flanger: copies the signal delays it for varying amounts throughout the sample and merge with original
              */
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -76,9 +101,9 @@ public class App {
                     if (soundFile == null) {
                         getFile();
                     } else {
-                        int delay_ms_max = 60;
-                        int delay_ms_min = 20;
-                        //int delay = 1200;
+                        int delay_ms_max = 25;
+                        int delay_ms_min = 5;
+
                         FloatSample samples = SampleLoader.loadFloatSample(soundFile);
 
                         float[] dsamples = new float[samples.getNumFrames() * samples.getChannelsPerFrame()];
@@ -88,13 +113,11 @@ public class App {
                         double frame_rate = samples.getFrameRate();
 
                         //Delayed sample
-                        FloatSample delayedsample = calculate_varying_delay(40, delay_ms_max, delay_ms_min,1, 1f, 1f, samples, samples.getChannelsPerFrame());
+                        FloatSample delayedsample = calculate_varying_delay(45, delay_ms_max, delay_ms_min,1, 1f, 1f, samples, samples.getChannelsPerFrame());
                         delayedsample.setFrameRate(frame_rate);
                         delayedsample.setChannelsPerFrame(samples.getChannelsPerFrame());
 
                         play(delayedsample);
-
-
 
                     }
                 } catch (IOException e1) {
@@ -333,7 +356,7 @@ public class App {
         float echoValue = 0f;
 
         // Get sample info
-        int buffer_length = samples.getNumFrames();
+        int buffer_length = samples.getNumFrames()*numChannels;
         double frame_rate = samples.getFrameRate();
 
         //Delay calculated to number of frames
