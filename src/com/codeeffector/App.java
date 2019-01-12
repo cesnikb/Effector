@@ -44,6 +44,8 @@ public class App {
     private JSlider slider5;
     private JLabel thresholdVal;
     private JLabel smoothingVal;
+    private JSlider slider6;
+    private JLabel volume_val;
     private JButton button1;
     private File soundFile;
     private VariableRateDataReader samplePlayer;
@@ -378,6 +380,13 @@ public class App {
                 smoothingVal.setText(Integer.toString(source.getValue()));
             }
         });
+        slider6.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                volume_val.setText(Integer.toString(source.getValue()));
+            }
+        });
     }
     private void redGreen(ActionEvent e){
         JButton power = (JButton)e.getSource();
@@ -649,7 +658,7 @@ public class App {
 
 
         try {
-            samples = volume_percentagte(samples, 1f);
+            samples = volume_percentagte(samples, (float)slider6.getValue()/100);
 
             LineOut lineOut = new LineOut();
             synth.add(lineOut = new LineOut());
