@@ -46,6 +46,26 @@ public class App {
     private JLabel smoothingVal;
     private JSlider slider6;
     private JLabel volume_val;
+    private JLabel maxDelayVal;
+    private JButton powerFlanger;
+    private JSlider maxDelaySlider;
+    private JSlider minDelaySlider;
+    private JSlider delayChangeSlider;
+    private JLabel delayChangeVal;
+    private JLabel minDelayVal;
+    private JSlider chorusDelay;
+    private JLabel chorusDelayVal;
+    private JSlider chorusFeedback;
+    private JLabel chorusFeedbackVal;
+    private JSlider reverbDelay;
+    private JButton powerReverb;
+    private JButton powerChorus;
+    private JButton powerPhaser;
+    private JSlider phaserGain;
+    private JSlider reverbFeedback;
+    private JLabel reverbDelayVal;
+    private JLabel reverbFeedbackVal;
+    private JLabel phaserGainVal;
     private JButton button1;
     private File soundFile;
     private VariableRateDataReader samplePlayer;
@@ -265,7 +285,7 @@ public class App {
                         } else {
                             FloatSample effectedSignal = SampleLoader.loadFloatSample(soundFile);
 
-                            //Process delay
+                            //Process Delay
                             if (powerDelay.getText().equals("On")) {
                                 double decay = slider1.getValue() * 0.01;
                                 int feedback = slider3.getValue();
@@ -273,18 +293,49 @@ public class App {
                                 effectedSignal = getDelayed((float) decay, feedback, delay);
                             }
 
-                            //Process distortion
+                            //Process Distortion
                             if (distortionOffButton.getText().equals("On")) {
                                 int thresholdDist = distSlider.getValue();
                                 effectedSignal = calculate_distortion(effectedSignal, thresholdDist*0.01f);
                             }
+                            //Process Phaser
+                            if (phaserButton.getText().equals("On")) {
+                                float phaserGainVal = phaserGain.getValue() * 0.01f;
+                                effectedSignal= all_pass(effectedSignal, phaserGainVal);
 
-                            //Process lowpass
+                            }
+
+                            //Process Flanger
+                            if (powerFlanger.getText().equals("On")) {
+                                int delayChangeV = delayChangeSlider.getValue();
+                                int minDelayV = minDelaySlider.getValue();
+                                int maxDelayV = maxDelaySlider.getValue();
+                                effectedSignal = calculate_varying_delay(delayChangeV, maxDelayV, minDelayV,1, 1f, 1f, effectedSignal, effectedSignal.getChannelsPerFrame());
+
+                            }
+
+                            //Process Chorus
+                            if (powerChorus.getText().equals("On")) {
+                                int chorusDelayV = chorusDelay.getValue();
+                                int chorusFeedbackV = chorusFeedback.getValue();
+                                effectedSignal = calculate_delay(chorusDelayV, chorusFeedbackV, 0.85f, 0.6f, effectedSignal,effectedSignal.getChannelsPerFrame());
+
+                            }
+
+                            //Process Reverb
+                            if (powerReverb.getText().equals("On")) {
+                                int reverbDelayV = reverbDelay.getValue();
+                                int reverbFeedbackV = reverbFeedback.getValue();
+                                effectedSignal = calculate_reverb(effectedSignal,effectedSignal.getChannelsPerFrame(),reverbFeedbackV, reverbDelayV);
+
+
+                            }
+
+                            //Process Lowpass
                             if (lowpassButton.getText().equals("On")) {
                                 int lowpass = slider5.getValue();
                                 effectedSignal = calculate_low_pass(effectedSignal, lowpass);
                             }
-
 
                             FloatSample finalEffectedSignal = effectedSignal;
                             new Thread(new Runnable() {
@@ -304,12 +355,6 @@ public class App {
                     }
             }
         });
-        loadDefaultSampleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadFile();
-            }
-        });
         reverbButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -323,7 +368,7 @@ public class App {
                         int numberOfChannels = samples.getChannelsPerFrame();
 
 
-                        FloatSample reverbSamples = calculate_reverb(samples,numberOfChannels,0.1f);
+                        FloatSample reverbSamples = calculate_reverb(samples,numberOfChannels,20,6);
                         reverbSamples.setFrameRate(frame_rate);
                         play(reverbSamples);
                     }
@@ -387,6 +432,95 @@ public class App {
                 volume_val.setText(Integer.toString(source.getValue()));
             }
         });
+        maxDelaySlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                if(source.getValue()<= minDelaySlider.getValue()){
+                    minDelaySlider.setValue(source.getValue()-1);
+                }
+                maxDelayVal.setText(Integer.toString(source.getValue()));
+
+            }
+        });
+        minDelaySlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                minDelayVal.setText(Integer.toString(source.getValue()));
+                maxDelaySlider.setMinimum(source.getValue() + 1);
+            }
+        });
+        delayChangeSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                delayChangeVal.setText(Integer.toString(source.getValue()));
+            }
+        });
+        chorusDelay.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                chorusDelayVal.setText(Integer.toString(source.getValue()));
+            }
+        });
+        chorusFeedback.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                chorusFeedbackVal.setText(Integer.toString(source.getValue()));
+
+            }
+        });
+        powerFlanger.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redGreen(e);
+            }
+        });
+        powerChorus.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redGreen(e);
+
+            }
+        });
+        powerReverb.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redGreen(e);
+
+            }
+        });
+        powerPhaser.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                redGreen(e);
+
+            }
+        });
+        reverbFeedback.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                reverbFeedbackVal.setText(Integer.toString(source.getValue()));
+            }
+        });
+        reverbDelay.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                reverbDelayVal.setText(Integer.toString(source.getValue()));
+            }
+        });
+        phaserGain.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider)e.getSource();
+                phaserGainVal.setText(String.format("%.2f", source.getValue()*0.01));
+            }
+        });
     }
     private void redGreen(ActionEvent e){
         JButton power = (JButton)e.getSource();
@@ -430,10 +564,50 @@ public class App {
 
     }
 
-    private FloatSample calculate_reverb(FloatSample samples,int numChannels, float threshold){
-        return null;
+    private FloatSample calculate_reverb(FloatSample samples,int numChannels, int repetitions, int delay) throws IOException {
+        // Get sample info
+        int buffer_length = samples.getNumFrames()*numChannels;
+        double frame_rate = samples.getFrameRate();
+        float[] dsamples = new float[buffer_length];
+        float[] dsamples_lowpassed = new float[buffer_length];
+
+        int delayfr = (int) Math.ceil(frame_rate * delay*repetitions / 1000);
+        int delayedFrames = buffer_length + (delayfr * repetitions);
+        float[] delayedsample = new float[delayedFrames];
+
+
+
+        for (int i = 0; i < buffer_length; i++) {
+            dsamples[i] = (float) samples.readDouble(i);
+            delayedsample[i] = dsamples[i];
+
+        }
+
+        for (int i = 0; i < repetitions; i++) {
+            float echoAmplitude = 1f;
+            float echoDecay = 0.6f;
+            int echoIndex = 0;
+            float echoValue = 0f;
+
+            float[] delay1 = calculate_reverb_delay(delay*(i+1), repetitions, 1.0f, 0.8f, samples, numChannels);
+            FloatSample dd = new FloatSample(delay1,numChannels);
+            FloatSample lowpassed = calculate_low_pass(dd, 200);
+            for (int k = 0; k < buffer_length; k++) {
+                dsamples_lowpassed[k] = (float) lowpassed.readDouble(k);
+            }
+            for (int o = 1; o <= repetitions; o++) {
+                echoAmplitude = echoAmplitude * echoDecay;
+                for (int j = 0; j < buffer_length; j++) {
+                    echoIndex = j + (delayfr * o);
+                    echoValue = (dsamples_lowpassed[j] * echoAmplitude);
+                    delayedsample[echoIndex] = echoValue + delayedsample[echoIndex];
+                }
+            }
+        }
+
+        return  new FloatSample(delayedsample,numChannels);
     }
-    private FloatSample calculate_delay1(int delayms, int numberOfRepetitions, float echoAmplitude, float echoDecay, FloatSample samples, int numChannels) throws IOException {
+    private float[] calculate_reverb_delay(int delayms, int numberOfRepetitions, float echoAmplitude, float echoDecay, FloatSample samples, int numChannels) throws IOException {
         int echoIndex = 0;
         float echoValue = 0f;
 
@@ -452,7 +626,6 @@ public class App {
         // Fill tables with original sample
         for (int i = 0; i < buffer_length; i++) {
             dsamples[i] = (float) samples.readDouble(i);
-            delayedsample[i] = dsamples[i];
         }
 
         System.out.println(samples.getNumFrames());
@@ -467,9 +640,7 @@ public class App {
             }
         }
 
-        FloatSample retSample = new FloatSample(delayedsample,numChannels);
-
-        return  retSample;
+        return  delayedsample;
     }
 
     private FloatSample calculate_distortion(FloatSample samples, float threshold){
@@ -575,7 +746,6 @@ public class App {
             delayedsample[i] = dsamples[i];
         }
 
-        System.out.println(samples.getNumFrames());
 
         // Add delays
         for (int i = 1; i <= numberOfRepetitions; i++) {
@@ -658,7 +828,7 @@ public class App {
 
 
         try {
-            samples = volume_percentagte(samples, (float)slider6.getValue()/100);
+            samples = volume_percentagte(samples, 2*(float)slider6.getValue()/100);
 
             LineOut lineOut = new LineOut();
             synth.add(lineOut = new LineOut());
@@ -746,6 +916,7 @@ public class App {
             throws Exception {
         JFrame frame = new JFrame("Effector");
         frame.setContentPane(new App().panelMain);
+        frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JButton b=new JButton("button1");
         frame.pack();
