@@ -704,21 +704,28 @@ public class App {
         return new FloatSample(lowpassed_array,numChannels);
     }
     private FloatSample all_pass(FloatSample sample, float gain) throws IOException {
-        // y(n) = -gain * x(n) + x(n - 1) + gain * y(n - 1) => all pass from jsyn
+        // y(n) = -gain * x(n) + x(n - 1) + gain * y(n - 1) => all pass from jsyn https://github.com/philburk/jsyn/blob/master/src/com/jsyn/unitgen/FilterAllPass.java
         int buffer_length = sample.getNumFrames()*sample.getChannelsPerFrame();
 
         float [] output = new float [buffer_length];
+        float [] samples = new float[buffer_length];
 
         float x_prev = (float)sample.readDouble(0)*gain;
         float x_curr = 0;
+        samples[0] = x_curr;
         float out = 0;
         output[0] = gain*-x_prev;
 
         for (int i = 1; i < buffer_length; i++) {
             x_curr = (float)sample.readDouble(i);
+            samples[i] = x_curr;
             out = gain* (output[i-1] - x_curr) + x_prev;
             x_prev = x_curr;
             output[i] = out;
+        }
+
+        for (int i = 1; i < buffer_length; i++) {
+            output[i] += samples[i];
         }
 
         return new FloatSample(output,sample.getChannelsPerFrame());
